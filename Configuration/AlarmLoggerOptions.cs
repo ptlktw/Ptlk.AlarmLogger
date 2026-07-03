@@ -31,6 +31,8 @@ public sealed class AlarmLoggerOptions
     public int EventQueueCapacity { get; set; } = 5000;
     public int HistoryBatchSize { get; set; } = 500;
     public int HistoryFlushIntervalMs { get; set; } = 1000;
+    public int HistoryWriteRetryCount { get; set; } = 2;
+    public int HistoryWriteRetryDelayMs { get; set; } = 500;
     public int RecentHistoryTake { get; set; } = 50;
     public int HistoryQueryMaxTake { get; set; } = 1000;
     public int HmiRefreshIntervalMs { get; set; } = 3000;
@@ -75,6 +77,8 @@ public static class OptionsRegistration
                            && o.EventQueueCapacity > 0
                            && o.HistoryBatchSize > 0
                            && o.HistoryFlushIntervalMs > 0
+                           && o.HistoryWriteRetryCount >= 0
+                           && o.HistoryWriteRetryDelayMs > 0
                            && o.RecentHistoryTake > 0
                            && o.HistoryQueryMaxTake > 0
                            && o.RecentHistoryTake <= o.HistoryQueryMaxTake
