@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Ptlk.AlarmLogger.Configuration;
 using Ptlk.AlarmLogger.Models;
 using Ptlk.AlarmLogger.Services.Status;
+using Ptlk.SCADA.Interop.Contracts.Redis;
 
 namespace Ptlk.AlarmLogger.Services.Logging;
 
@@ -13,6 +14,8 @@ public sealed class AlarmEventProcessorHostedService(
     IOptions<AlarmLoggerOptions> options,
     ILogger<AlarmEventProcessorHostedService> logger) : BackgroundService
 {
+    private static readonly JsonSerializerOptions ContractJsonOptions = new(JsonSerializerDefaults.Web);
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var batch = new List<AlarmHistoryRecord>();
@@ -86,22 +89,41 @@ public sealed class AlarmEventProcessorHostedService(
                 return false;
             }
 
+            AlarmEventContract? contract;
+            try
+            {
+                contract = JsonSerializer.Deserialize<AlarmEventContract>(
+                    envelope.Payload,
+                    ContractJsonOptions);
+            }
+            catch (JsonException ex)
+            {
+                error = $"payload could not be materialized as the shared alarm contract: {ex.Message}";
+                return false;
+            }
+
+            if (contract is null)
+            {
+                error = "payload could not be materialized as the shared alarm contract.";
+                return false;
+            }
+
             record = new AlarmHistoryRecord
             {
                 Timestamp = timestamp,
                 EventTime = eventTime,
-                SourceName = sourceName,
-                CategoryTag = categoryTag,
+                SourceName = contract.SourceName,
+                CategoryTag = contract.CategoryTag,
                 ConditionName = conditionName,
-                ConditionSubName = conditionSubName,
-                ConditionActive = conditionActive,
+                ConditionSubName = contract.ConditionSubName,
+                ConditionActive = contract.ConditionActive,
                 Quality = quality,
                 QualityTime = qualityTime,
-                IsAcknowledge = isAcknowledge,
-                NeedAck = needAck,
-                OldValueJson = oldValueJson,
-                NewValueJson = newValueJson,
-                Message = message,
+                IsAcknowledge = contract.IsAcknowledge,
+                NeedAck = contract.NeedAck,
+                OldValueJson = contract.OldValue?.GetRawText(),
+                NewValueJson = contract.NewValue?.GetRawText(),
+                Message = contract.Message,
                 ReceivedAt = envelope.ReceivedAt.ToUniversalTime()
             };
             return true;
