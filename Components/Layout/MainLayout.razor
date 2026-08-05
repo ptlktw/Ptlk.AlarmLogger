@@ -1,5 +1,17 @@
 @inherits LayoutComponentBase
 
+@inject Ptlk.SSO.Client.PtlkServiceAuthenticationOptions Authentication
+@inject Ptlk.SSO.Client.PtlkSsoServiceOptions Sso
+
+@if (Authentication.IsDevelopmentBypass)
+{
+    <div role="alert" style="background:#b45309;color:white;padding:.5rem 1rem;font-weight:700">Development Bypass — synthetic identity active</div>
+}
+@if (!Sso.RequireTls)
+{
+    <div role="alert" style="background:#b91c1c;color:white;padding:.5rem 1rem;font-weight:700">TLS NOT REQUIRED — controlled test networks only</div>
+}
+
 <div class="shell">
     <aside class="sidebar">
         <NavMenu />

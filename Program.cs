@@ -17,7 +17,7 @@ builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
 builder.Services.AddAlarmLoggerOptions(builder.Configuration);
-builder.Services.AddPtlkSsoServiceAuthentication(builder.Configuration.GetSection("Sso"));
+builder.Services.AddPtlkSsoServiceAuthentication(builder.Configuration, builder.Environment);
 
 var historyConnection = builder.Configuration.GetConnectionString("HistoryConnection")
     ?? throw new InvalidOperationException("ConnectionStrings:HistoryConnection is required.");
@@ -61,6 +61,16 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 var app = builder.Build();
+var authenticationDeployment = app.Services.GetRequiredService<PtlkServiceAuthenticationOptions>();
+var ssoDeployment = app.Services.GetRequiredService<PtlkSsoServiceOptions>();
+if (authenticationDeployment.IsDevelopmentBypass)
+{
+    app.Logger.LogWarning("Development Bypass is active for AlarmLogger.");
+}
+if (!ssoDeployment.RequireTls)
+{
+    app.Logger.LogWarning("TLS NOT REQUIRED for AlarmLogger; use only on a controlled test network.");
+}
 
 using (var scope = app.Services.CreateScope())
 {
@@ -79,6 +89,9 @@ using (var scope = app.Services.CreateScope())
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
+}
+if (builder.Configuration.GetValue("Sso:RequireTls", true))
+{
     app.UseHsts();
 }
 
