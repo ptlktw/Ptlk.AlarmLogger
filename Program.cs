@@ -9,6 +9,7 @@ using Ptlk.AlarmLogger.Services.Redis;
 using Ptlk.AlarmLogger.Services.Startup;
 using Ptlk.AlarmLogger.Services.Status;
 using Ptlk.SSO.Client;
+using Ptlk.SSO.Core.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,11 +64,12 @@ builder.Services.AddRazorComponents()
 var app = builder.Build();
 var authenticationDeployment = app.Services.GetRequiredService<PtlkServiceAuthenticationOptions>();
 var ssoDeployment = app.Services.GetRequiredService<PtlkSsoServiceOptions>();
-if (authenticationDeployment.IsDevelopmentBypass)
+var securityWarnings = app.Services.GetRequiredService<PtlkSecurityWarningOptions>();
+if (securityWarnings.Show && authenticationDeployment.IsDevelopmentBypass)
 {
     app.Logger.LogWarning("Development Bypass is active for AlarmLogger.");
 }
-if (!ssoDeployment.RequireTls)
+if (securityWarnings.Show && !ssoDeployment.RequireTls)
 {
     app.Logger.LogWarning("TLS NOT REQUIRED for AlarmLogger; use only on a controlled test network.");
 }
