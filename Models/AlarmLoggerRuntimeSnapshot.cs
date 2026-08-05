@@ -20,3 +20,18 @@ public sealed record AlarmLoggerStatusSnapshot(
     long QueueDroppedCount,
     int QueueLength,
     IReadOnlyList<string> RecentErrors);
+
+public sealed record AlarmLoggerHealthResponse(
+    string ServiceStatus,
+    DateTimeOffset StartedAt,
+    DateTimeOffset SnapshotTime,
+    bool RedisConnected,
+    bool AssetInitialized,
+    bool AlarmSubscriptionHealthy,
+    bool HistoryWriteHealthy,
+    long ReceivedCount,
+    long WrittenCount,
+    long FailedWriteCount,
+    long InvalidPayloadCount,
+    long QueueDroppedCount,
+    int QueueLength);

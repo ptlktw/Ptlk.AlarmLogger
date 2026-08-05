@@ -8,6 +8,7 @@ using Ptlk.AlarmLogger.Services.Query;
 using Ptlk.AlarmLogger.Services.Redis;
 using Ptlk.AlarmLogger.Services.Startup;
 using Ptlk.AlarmLogger.Services.Status;
+using Ptlk.SSO.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
 builder.Services.AddAlarmLoggerOptions(builder.Configuration);
+builder.Services.AddPtlkSsoServiceAuthentication(builder.Configuration.GetSection("Sso"));
 
 var historyConnection = builder.Configuration.GetConnectionString("HistoryConnection")
     ?? throw new InvalidOperationException("ConnectionStrings:HistoryConnection is required.");
@@ -80,16 +82,24 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+app.UseWhen(
+    context => !context.Request.Path.StartsWithSegments("/api"),
+    branch => branch.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true));
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+    .AddInteractiveServerRenderMode()
+    .RequireAuthorization();
+app.MapPtlkSsoServiceAuthentication();
 
-app.MapGet("/healthz", (AlarmLoggerStatusQueryService status) => Results.Ok(status.GetSnapshot()));
+app.MapGet("/healthz", (AlarmLoggerStatusQueryService status) => Results.Ok(status.GetHealth()))
+    .AllowAnonymous();
 
-app.MapGet("/api/alarm-logger/status", (AlarmLoggerStatusQueryService status) => Results.Ok(status.GetSnapshot()));
+app.MapGet("/api/alarm-logger/status", (AlarmLoggerStatusQueryService status) => Results.Ok(status.GetSnapshot()))
+    .RequireAuthorization(PtlkSsoServiceAuthentication.ApiPolicy);
 
 app.MapGet("/api/alarm-logger/history/range", (
     string? begin,
@@ -98,7 +108,8 @@ app.MapGet("/api/alarm-logger/history/range", (
     string? time_zone,
     string? category_tag,
     AlarmHistoryQueryService query,
-    CancellationToken cancellationToken) => query.QueryRangeHttpAsync(begin, end, order, time_zone, category_tag, cancellationToken));
+    CancellationToken cancellationToken) => query.QueryRangeHttpAsync(begin, end, order, time_zone, category_tag, cancellationToken))
+    .RequireAuthorization(PtlkSsoServiceAuthentication.ApiPolicy);
 
 app.MapGet("/api/alarm-logger/history/page", (
     int? skip,
@@ -107,6 +118,7 @@ app.MapGet("/api/alarm-logger/history/page", (
     string? time_zone,
     string? category_tag,
     AlarmHistoryQueryService query,
-    CancellationToken cancellationToken) => query.QueryPageHttpAsync(skip, take, order, time_zone, category_tag, cancellationToken));
+    CancellationToken cancellationToken) => query.QueryPageHttpAsync(skip, take, order, time_zone, category_tag, cancellationToken))
+    .RequireAuthorization(PtlkSsoServiceAuthentication.ApiPolicy);
 
 app.Run();
