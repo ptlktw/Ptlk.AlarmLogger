@@ -1,9 +1,6 @@
-<div class="brand">
-    <a href="">AlarmLogger</a>
-</div>
-
+<div class="brand"><a href="">AlarmLogger</a></div>
 <nav class="nav">
-    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">Status</NavLink>
-    <NavLink class="nav-link" href="recent-alarm-history">Recent History</NavLink>
-    <NavLink class="nav-link" href="alarm-history-query">History Query</NavLink>
+    <AuthorizeView Policy="page:status:read"><NavLink class="nav-link" href="" Match="NavLinkMatch.All">Status</NavLink></AuthorizeView>
+    <AuthorizeView Policy="page:recent-alarm-history:read"><NavLink class="nav-link" href="recent-alarm-history">Recent History</NavLink></AuthorizeView>
+    <AuthorizeView Policy="page:alarm-history-query:read"><NavLink class="nav-link" href="alarm-history-query">History Query</NavLink></AuthorizeView>
 </nav>

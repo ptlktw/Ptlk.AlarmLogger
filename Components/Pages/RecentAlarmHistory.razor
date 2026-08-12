@@ -1,5 +1,6 @@
 @page "/recent-alarm-history"
 @rendermode InteractiveServer
+@attribute [Authorize(Policy = "page:recent-alarm-history:read")]
 @using Microsoft.Extensions.Options
 @using Ptlk.AlarmLogger.Configuration
 @using Ptlk.AlarmLogger.Services.Status

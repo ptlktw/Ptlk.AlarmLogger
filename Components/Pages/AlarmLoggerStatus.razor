@@ -1,6 +1,7 @@
 @page "/"
 @page "/alarm-logger-status"
 @rendermode InteractiveServer
+@attribute [Authorize(Policy = "page:status:read")]
 @using Ptlk.AlarmLogger.Services.Status
 @implements IDisposable
 @inject AlarmLoggerStatusQueryService Status

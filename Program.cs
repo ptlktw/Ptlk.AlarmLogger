@@ -19,6 +19,7 @@ builder.Logging.AddDebug();
 
 builder.Services.AddAlarmLoggerOptions(builder.Configuration);
 builder.Services.AddPtlkSsoServiceAuthentication(builder.Configuration, builder.Environment);
+builder.Services.AddCascadingAuthenticationState();
 
 var historyConnection = builder.Configuration.GetConnectionString("HistoryConnection")
     ?? throw new InvalidOperationException("ConnectionStrings:HistoryConnection is required.");

@@ -1,5 +1,6 @@
 @page "/alarm-history-query"
 @rendermode InteractiveServer
+@attribute [Authorize(Policy = "page:alarm-history-query:read")]
 @inject AlarmHistoryQueryService Query
 
 <div class="page-heading">
