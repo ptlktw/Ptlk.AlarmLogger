@@ -10,8 +10,10 @@ using Ptlk.AlarmLogger.Services.Startup;
 using Ptlk.AlarmLogger.Services.Status;
 using Ptlk.SSO.Client;
 using Ptlk.SSO.Core.Security;
+using Ptlk.Web.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddPtlkPublicWebHosting(builder.Configuration, builder.Environment, "alarm-logger");
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -63,6 +65,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 var app = builder.Build();
+app.UsePtlkPublicPathBase();
 var authenticationDeployment = app.Services.GetRequiredService<PtlkServiceAuthenticationOptions>();
 var ssoDeployment = app.Services.GetRequiredService<PtlkSsoServiceOptions>();
 var securityWarnings = app.Services.GetRequiredService<PtlkSecurityWarningOptions>();
@@ -110,6 +113,7 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .RequireAuthorization();
 app.MapPtlkSsoServiceAuthentication();
+app.MapPtlkSsoSessionActivity();
 
 app.MapGet("/healthz", (AlarmLoggerStatusQueryService status) => Results.Ok(status.GetHealth()))
     .AllowAnonymous();

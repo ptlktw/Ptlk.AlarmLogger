@@ -4,7 +4,7 @@
     <Authorized Context="session">
         <div style="margin-left:auto;display:flex;align-items:center;gap:.75rem;white-space:nowrap">
             <span title="目前登入使用者">目前登入：@DisplayName(session.User)</span>
-            <form method="post" action="/account/logout" style="margin:0">
+    <form method="post" action="account/logout" style="margin:0">
                 <AntiforgeryToken />
                 <button type="submit" name="scope" value="global" class="btn small">全部登出</button>
             </form>

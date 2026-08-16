@@ -1,10 +1,11 @@
+@inject Ptlk.Web.Hosting.IApplicationUrlBuilder ApplicationUrls
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <base href="/" />
+    <base href="@ApplicationUrls.BaseHref" />
     <ResourcePreloader />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <ImportMap />
@@ -14,6 +15,7 @@
 <body>
     <Routes />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script src="_content/Ptlk.SSO.Client/session-activity.js" defer></script>
 </body>
 
 </html>
