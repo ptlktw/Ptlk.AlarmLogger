@@ -55,6 +55,7 @@ builder.Services.AddSingleton<RedisConnectionFactory>();
 builder.Services.AddSingleton<AlarmHistoryWriter>();
 
 builder.Services.AddScoped<AlarmLoggerStatusQueryService>();
+builder.Services.AddScoped<IAlarmLoggerReadinessEvaluator, AlarmLoggerReadinessEvaluator>();
 builder.Services.AddScoped<AlarmHistoryQueryService>();
 
 builder.Services.AddHostedService<StartupGateService>();
@@ -117,6 +118,12 @@ app.MapPtlkSsoSessionActivity();
 
 app.MapGet("/healthz", (AlarmLoggerStatusQueryService status) => Results.Ok(status.GetHealth()))
     .AllowAnonymous();
+app.MapGet("/healthz/live", () => Results.Ok(new { status = "live" })).AllowAnonymous();
+app.MapGet("/healthz/ready", async (IAlarmLoggerReadinessEvaluator readiness, CancellationToken token) =>
+{
+    var result = await readiness.EvaluateAsync(token);
+    return Results.Json(result, statusCode: result.IsReady ? StatusCodes.Status200OK : StatusCodes.Status503ServiceUnavailable);
+}).AllowAnonymous();
 
 app.MapGet("/api/alarm-logger/status", (AlarmLoggerStatusQueryService status) => Results.Ok(status.GetSnapshot()))
     .RequireAuthorization(PtlkSsoServiceAuthentication.ApiPolicy);
