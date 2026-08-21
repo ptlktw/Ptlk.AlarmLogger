@@ -56,6 +56,7 @@ builder.Services.AddSingleton<AlarmHistoryWriter>();
 
 builder.Services.AddScoped<AlarmLoggerStatusQueryService>();
 builder.Services.AddScoped<AlarmHistoryQueryService>();
+builder.Services.AddScoped<IAlarmLoggerReadinessEvaluator, AlarmLoggerReadinessEvaluator>();
 
 builder.Services.AddHostedService<StartupGateService>();
 builder.Services.AddHostedService<RedisAlarmEventSubscriptionService>();
@@ -117,6 +118,7 @@ app.MapPtlkSsoSessionActivity();
 
 app.MapGet("/healthz", (AlarmLoggerStatusQueryService status) => Results.Ok(status.GetHealth()))
     .AllowAnonymous();
+app.MapAlarmLoggerHealthEndpoints();
 
 app.MapGet("/api/alarm-logger/status", (AlarmLoggerStatusQueryService status) => Results.Ok(status.GetSnapshot()))
     .RequireAuthorization(PtlkSsoServiceAuthentication.ApiPolicy);

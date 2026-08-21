@@ -144,6 +144,19 @@ public sealed class AlarmLoggerRuntimeSnapshotService(
         }
     }
 
+    public AlarmLoggerReadinessState GetReadinessState()
+    {
+        lock (_sync)
+        {
+            return new(
+                _serviceStatus == AlarmLoggerServiceStatus.Running,
+                _redisConnected,
+                _assetInitialized,
+                _alarmSubscriptionHealthy,
+                _historyWriteHealthy);
+        }
+    }
+
     private AlarmLoggerServiceStatus ResolveStatus()
     {
         if (_serviceStatus is AlarmLoggerServiceStatus.Stopping or AlarmLoggerServiceStatus.Failed)
