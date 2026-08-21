@@ -33,4 +33,5 @@ COPY --from=build /app/publish /app
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 VOLUME ["/data"]
+LABEL io.ptlk.readiness.path="/healthz/ready"
 ENTRYPOINT ["dotnet", "/app/Ptlk.AlarmLogger.dll"]
