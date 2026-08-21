@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Ptlk.AlarmLogger.Configuration;
+using Ptlk.AlarmLogger.Services.Logging;
 using Ptlk.AlarmLogger.Services.Status;
 using Xunit;
 
@@ -21,11 +23,34 @@ public sealed class HealthEndpointTests
 
         var live = await client.GetAsync("/alarm-logger/healthz/live");
         var ready = await client.GetAsync("/alarm-logger/healthz/ready");
+        var legacy = await client.GetAsync("/alarm-logger/healthz");
 
         Assert.Equal(HttpStatusCode.OK, live.StatusCode);
         Assert.Equal(HttpStatusCode.OK, ready.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, legacy.StatusCode);
         Assert.Equal("live", (await live.Content.ReadFromJsonAsync<HealthResponse>())?.Status);
         Assert.Equal("ready", (await ready.Content.ReadFromJsonAsync<LoggerReadinessResult>())?.Status);
+    }
+
+    [Fact]
+    public async Task Ready_CanRecoverWithinSameHttpProcess()
+    {
+        var readiness = new StubReadinessEvaluator(new(
+            false,
+            "not_ready",
+            ["database_unavailable"]));
+        await using var app = await CreateAppAsync(readiness);
+        using var client = app.GetTestClient();
+
+        Assert.Equal(
+            HttpStatusCode.ServiceUnavailable,
+            (await client.GetAsync("/alarm-logger/healthz/ready")).StatusCode);
+
+        readiness.Result = new(true, "ready", []);
+
+        Assert.Equal(
+            HttpStatusCode.OK,
+            (await client.GetAsync("/alarm-logger/healthz/ready")).StatusCode);
     }
 
     [Fact]
@@ -57,6 +82,11 @@ public sealed class HealthEndpointTests
                 .Build();
         });
         builder.Services.AddSingleton(readiness);
+        builder.Services.Configure<AlarmLoggerOptions>(_ => { });
+        builder.Services.AddSingleton<AlarmLoggerUiEventHub>();
+        builder.Services.AddSingleton<AlarmLoggerRuntimeSnapshotService>();
+        builder.Services.AddSingleton<AlarmEventQueue>();
+        builder.Services.AddSingleton<AlarmLoggerStatusQueryService>();
         var app = builder.Build();
         app.UsePathBase("/alarm-logger");
         app.UseAuthorization();
@@ -68,8 +98,10 @@ public sealed class HealthEndpointTests
     private sealed class StubReadinessEvaluator(LoggerReadinessResult result)
         : IAlarmLoggerReadinessEvaluator
     {
+        public LoggerReadinessResult Result { get; set; } = result;
+
         public Task<LoggerReadinessResult> EvaluateAsync(CancellationToken cancellationToken) =>
-            Task.FromResult(result);
+            Task.FromResult(Result);
     }
 
     private sealed record HealthResponse(string Status);

@@ -116,8 +116,6 @@ app.MapRazorComponents<App>()
 app.MapPtlkSsoServiceAuthentication();
 app.MapPtlkSsoSessionActivity();
 
-app.MapGet("/healthz", (AlarmLoggerStatusQueryService status) => Results.Ok(status.GetHealth()))
-    .AllowAnonymous();
 app.MapAlarmLoggerHealthEndpoints();
 
 app.MapGet("/api/alarm-logger/status", (AlarmLoggerStatusQueryService status) => Results.Ok(status.GetSnapshot()))

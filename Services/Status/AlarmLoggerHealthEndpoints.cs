@@ -8,6 +8,10 @@ public static class AlarmLoggerHealthEndpoints
 {
     public static IEndpointRouteBuilder MapAlarmLoggerHealthEndpoints(this IEndpointRouteBuilder endpoints)
     {
+        endpoints.MapGet(
+                "/healthz",
+                (AlarmLoggerStatusQueryService status) => Results.Ok(status.GetHealth()))
+            .AllowAnonymous();
         endpoints.MapGet("/healthz/live", () => Results.Ok(new { status = "live" }))
             .AllowAnonymous();
         endpoints.MapGet(
